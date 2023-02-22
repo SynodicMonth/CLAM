@@ -68,6 +68,7 @@ parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--no_auto_skip', default=False, action='store_true')
 parser.add_argument('--custom_downsample', type=int, default=1)
 parser.add_argument('--target_patch_size', type=int, default=-1)
+parser.add_argument('--ckpt', type=str, default=None)
 args = parser.parse_args()
 
 
@@ -87,8 +88,11 @@ if __name__ == '__main__':
 
 	print('loading model checkpoint')
 	model = vit_small(patch_size=16)
-	ckpt = "models/vits_tcga_brca_dino.pt"
-	state_dict = torch.load(ckpt, map_location="cpu")['teacher']
+	# check whether the ckpt_path exists
+	if not args.ckpt or not os.path.exists(args.ckpt):
+		print('ckpt does not exist')
+		raise FileNotFoundError(args.ckpt)
+	state_dict = torch.load(args.ckpt, map_location="cpu")['teacher']
 	state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
 	state_dict = {k.replace("backbone.", ""): v for k, v in state_dict.items()}
 	missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
